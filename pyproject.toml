@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "dark-swan"
+version = "0.1.0"
+description = "Decentralized identity and symbolic anonymization protocol using Ed25519 cryptography"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Adam Grange", email = "ao3575911@gmail.com" }]
+requires-python = ">=3.10"
+dependencies = ["cryptography"]
+
+[project.optional-dependencies]
+ipfs = ["ipfshttpclient"]
+dev  = ["pytest", "ruff"]
+
+[project.urls]
+Homepage   = "https://github.com/ao3575911/dark-swan"
+Repository = "https://github.com/ao3575911/dark-swan"
+Issues     = "https://github.com/ao3575911/dark-swan/issues"
