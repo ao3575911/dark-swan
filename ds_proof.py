@@ -7,7 +7,7 @@ Wire format::
 
     {
       "type":       "dark-swan-proof",
-      "did":        "did:ds:<symbolic_id>",
+      "did":        "did:ds:<fingerprint>",
       "symbol":     "UYRJ",
       "handle":     "ds-DENA",
       "claim":      "I control this identity",
@@ -21,14 +21,15 @@ Wire format::
 The signature covers the canonical JSON of all fields except ``signature``
 itself, serialised with sorted keys and no extra whitespace.
 """
+
 from __future__ import annotations
 
 import json
 import time
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Tuple
 
-from ds_protocol_core import DSIdentity, verify_message
+from ds_protocol_core import DSIdentity, pubkey_to_did, pubkey_to_id, verify_message
 
 _TYPE = 'dark-swan-proof'
 _DEFAULT_CONTEXT = 'github.com/ao3575911/dark-swan'
@@ -72,15 +73,15 @@ def create_proof(
     """
     now = time.time()
     proof: dict = {
-        'type':       _TYPE,
-        'did':        f'did:ds:{identity.symbolic_id}',
-        'symbol':     identity.symbolic_id,
-        'handle':     identity.ephemeral_handle(),
-        'claim':      claim,
-        'context':    context,
-        'issued_at':  _iso(now),
+        'type': _TYPE,
+        'did': identity.did,
+        'symbol': identity.symbolic_id,
+        'handle': identity.ephemeral_handle(),
+        'claim': claim,
+        'context': context,
+        'issued_at': _iso(now),
         'expires_at': _iso(now + ttl_hours * 3600),
-        'pubkey':     identity.public_key_b64(),
+        'pubkey': identity.public_key_b64(),
     }
     proof['signature'] = identity.sign(_canonical(proof))
     return proof
@@ -109,7 +110,19 @@ def verify_proof(proof: dict) -> Tuple[bool, str]:
         return False, f'proof expired at {proof["expires_at"]}'
 
     pubkey = proof.get('pubkey', '')
-    sig    = proof.get('signature', '')
+    sig = proof.get('signature', '')
+
+    try:
+        expected_did = pubkey_to_did(pubkey)
+        expected_symbol = pubkey_to_id(pubkey)
+    except Exception:
+        return False, 'pubkey invalid'
+
+    if proof.get('did') != expected_did:
+        return False, 'DID does not match pubkey'
+    if proof.get('symbol') != expected_symbol:
+        return False, 'symbol does not match pubkey'
+
     payload = _canonical(proof)
 
     if not verify_message(pubkey, payload, sig):

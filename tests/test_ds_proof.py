@@ -1,14 +1,14 @@
 """Tests for ds_proof.py — Proof card creation and verification."""
-import sys
-import os
+
 import json
+import os
+import sys
 import tempfile
-import time
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+from ds_proof import _canonical, create_proof, load_proof, save_proof, verify_proof
 from ds_protocol_core import DSIdentity
-from ds_proof import create_proof, verify_proof, load_proof, save_proof, _canonical
 
 
 class TestCreateProof(unittest.TestCase):
@@ -21,7 +21,8 @@ class TestCreateProof(unittest.TestCase):
 
     def test_did_format(self):
         p = create_proof(self.ident, 'test claim')
-        self.assertEqual(p['did'], f'did:ds:{self.ident.symbolic_id}')
+        self.assertEqual(p['did'], self.ident.did)
+        self.assertRegex(p['did'], r'^did:ds:[0-9a-f]{32}$')
 
     def test_symbol_matches_identity(self):
         p = create_proof(self.ident, 'test claim')
@@ -89,6 +90,18 @@ class TestVerifyProof(unittest.TestCase):
         bad = dict(self.proof, pubkey=other.public_key_b64())
         ok, _ = verify_proof(bad)
         self.assertFalse(ok)
+
+    def test_tampered_did_fails(self):
+        bad = dict(self.proof, did='did:ds:' + '0' * 32)
+        ok, reason = verify_proof(bad)
+        self.assertFalse(ok)
+        self.assertIn('DID', reason)
+
+    def test_tampered_symbol_fails(self):
+        bad = dict(self.proof, symbol='ZZZZ')
+        ok, reason = verify_proof(bad)
+        self.assertFalse(ok)
+        self.assertIn('symbol', reason)
 
     def test_expired_proof_fails(self):
         past = dict(self.proof)

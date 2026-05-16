@@ -10,12 +10,13 @@
 
 ## v0.3 — DID / fingerprint upgrade  *(current)*
 
-- Add `did:ds:<hex16>` long-form identity key (first 8 bytes of SHA-256(pubkey) as hex)
-- Registry records carry both `symbolic_id` (4-letter short form) and `did` (long form)
-- Lookup by DID in `ds lookup`
-- Optional KDF hardening path: document and implement Argon2id seed stretching  
+- [x] Add `did:ds:<hex32>` long-form identity key (first 16 bytes of SHA-256(pubkey) as hex)
+- [x] Registry records carry both `symbolic_id` (4-letter short form) and `did` (long form)
+- [x] Lookup by DID in `ds lookup`
+- [x] Random Ed25519 key files with encrypted PEM storage
+- [ ] Optional KDF hardening path: document and implement Argon2id seed stretching  
   (opt-in via `--kdf argon2` flag, backward-compatible)
-- SQLite backend for registry with write locking
+- [ ] SQLite backend for registry with write locking
 
 ## v0.4 — Proof cards (full)
 

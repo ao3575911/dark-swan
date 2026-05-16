@@ -11,7 +11,9 @@ pip install -e .          # installs `ds` command globally
 ## Identity
 
 ```bash
-ds generate "my seed"
+ds generate "my seed"          # legacy deterministic mode
+ds keygen -o identity.pem --passphrase "strong passphrase"
+ds generate-key identity.pem --passphrase "strong passphrase"
 # ── dark-swan · generate ─────────────────────
 # id=KLNI  handle=ds-QVWK  dr=1  energy=21.07
 
@@ -25,6 +27,7 @@ ds profile FWEM           # GDk9 profile of any word
 ```bash
 # Sign
 ds sign "my seed" "the message"
+ds sign-key identity.pem "the message" --passphrase "strong passphrase"
 # → sig=<base64>  pubkey=<base64>
 
 # Verify (no seed needed)

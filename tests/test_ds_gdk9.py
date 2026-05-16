@@ -1,18 +1,19 @@
 """Tests for ds_gdk9.py — GDk9 symbolic bridge."""
-import sys
-import os
+
 import math
+import os
+import sys
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from ds_gdk9 import (
-    bytes_to_word,
-    pubkey_to_symbolic_id,
-    symbolic_id_profile,
-    derive_handle,
+    _digital_root,
     _sym_class,
     _sym_energy,
-    _digital_root,
+    bytes_to_word,
+    derive_handle,
+    pubkey_to_symbolic_id,
+    symbolic_id_profile,
 )
 
 
@@ -56,8 +57,14 @@ class TestPubkeyToSymbolicId(unittest.TestCase):
 class TestSymbolicIdProfile(unittest.TestCase):
     def test_keys_present(self):
         p = symbolic_id_profile('FWEM')
-        for key in ('word', 'total_energy', 'digital_root', 'dominant_class',
-                    'class_counts', 'steps'):
+        for key in (
+            'word',
+            'total_energy',
+            'digital_root',
+            'dominant_class',
+            'class_counts',
+            'steps',
+        ):
             self.assertIn(key, p)
 
     def test_word_uppercased(self):

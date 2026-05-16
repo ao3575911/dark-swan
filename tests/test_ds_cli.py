@@ -1,14 +1,12 @@
 """Tests for ds_cli.py — argument parsing and validation."""
-import sys
+
 import os
-import json
+import sys
 import tempfile
 import unittest
-from unittest.mock import patch
-from io import StringIO
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from ds_cli import build_parser, cmd_search, _VALID_CLASSES
+from ds_cli import _VALID_CLASSES, build_parser, cmd_search
 from ds_protocol_core import DSIdentity
 from ds_registry import DSRegistry
 
@@ -98,10 +96,10 @@ class TestSearchValidation(unittest.TestCase):
 
 class TestValidClassesConstant(unittest.TestCase):
     def test_all_four_classes_present(self):
-        self.assertIn('idempotent',  _VALID_CLASSES)
-        self.assertIn('biphasic',    _VALID_CLASSES)
-        self.assertIn('involutive',  _VALID_CLASSES)
-        self.assertIn('asymmetric',  _VALID_CLASSES)
+        self.assertIn('idempotent', _VALID_CLASSES)
+        self.assertIn('biphasic', _VALID_CLASSES)
+        self.assertIn('involutive', _VALID_CLASSES)
+        self.assertIn('asymmetric', _VALID_CLASSES)
 
     def test_no_extra_classes(self):
         self.assertEqual(len(_VALID_CLASSES), 4)

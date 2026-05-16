@@ -1,10 +1,11 @@
 """Tests for ds_protocol_core.py — DSIdentity and standalone verify."""
-import sys
+
 import os
+import sys
 import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from ds_protocol_core import DSIdentity, verify_message, pubkey_to_id
+from ds_protocol_core import DSIdentity, pubkey_to_did, pubkey_to_id, verify_message
 
 
 class TestDSIdentityInit(unittest.TestCase):
@@ -37,9 +38,15 @@ class TestDSIdentityInit(unittest.TestCase):
 
     def test_symbolic_id_derived_from_pubkey(self):
         from ds_gdk9 import pubkey_to_symbolic_id
+
         raw = self.identity.public_key_raw()
         expected = pubkey_to_symbolic_id(raw)
         self.assertEqual(self.identity.symbolic_id, expected)
+
+    def test_did_is_canonical_fingerprint(self):
+        did = self.identity.did
+        self.assertRegex(did, r'^did:ds:[0-9a-f]{32}$')
+        self.assertEqual(pubkey_to_did(self.identity.public_key_b64()), did)
 
 
 class TestSignVerify(unittest.TestCase):
@@ -64,16 +71,16 @@ class TestSignVerify(unittest.TestCase):
 
     def test_cross_identity_verify_fails(self):
         other = DSIdentity('other-seed')
-        sig   = self.identity.sign(self.msg)
+        sig = self.identity.sign(self.msg)
         self.assertFalse(other.verify(self.msg, sig))
 
 
 class TestStandaloneVerify(unittest.TestCase):
     def setUp(self):
         self.identity = DSIdentity('standalone-test')
-        self.msg      = 'standalone message'
-        self.sig      = self.identity.sign(self.msg)
-        self.pubkey   = self.identity.public_key_b64()
+        self.msg = 'standalone message'
+        self.sig = self.identity.sign(self.msg)
+        self.pubkey = self.identity.public_key_b64()
 
     def test_verify_message_valid(self):
         self.assertTrue(verify_message(self.pubkey, self.msg, self.sig))
@@ -96,13 +103,13 @@ class TestPubkeyToId(unittest.TestCase):
 
     def test_deterministic(self):
         ident = DSIdentity('det-test')
-        pk    = ident.public_key_b64()
+        pk = ident.public_key_b64()
         self.assertEqual(pubkey_to_id(pk), pubkey_to_id(pk))
 
 
 class TestEphemeralHandle(unittest.TestCase):
     def test_format(self):
-        ident  = DSIdentity('handle-test')
+        ident = DSIdentity('handle-test')
         handle = ident.ephemeral_handle(0)
         self.assertTrue(handle.startswith('ds-'))
         self.assertEqual(len(handle), 7)
@@ -126,5 +133,5 @@ class TestProfile(unittest.TestCase):
 
     def test_profile_word_matches_symbolic_id(self):
         ident = DSIdentity('profile-match')
-        p     = ident.profile()
+        p = ident.profile()
         self.assertEqual(p['word'], ident.symbolic_id)

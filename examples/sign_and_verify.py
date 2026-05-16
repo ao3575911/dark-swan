@@ -4,26 +4,27 @@ Demonstrates that verification requires no seed — anyone with the
 public key can independently confirm the signature and re-derive the
 symbolic ID.
 """
-from ds_protocol_core import DSIdentity, verify_message, pubkey_to_id
+
+from ds_protocol_core import DSIdentity, pubkey_to_id, verify_message
 
 # ── Signer side (holds the seed) ─────────────────────────────────────────────
-identity  = DSIdentity("dark-swan@protocol")
-message   = "publish: the medium is the message"
+identity = DSIdentity('dark-swan@protocol')
+message = 'publish: the medium is the message'
 signature = identity.sign(message)
 
-print("=== signer ===")
-print("id     :", identity.symbolic_id)
-print("pubkey :", identity.public_key_b64())
-print("sig    :", signature[:48] + "…")
+print('=== signer ===')
+print('id     :', identity.symbolic_id)
+print('pubkey :', identity.public_key_b64())
+print('sig    :', signature[:48] + '…')
 
 # ── Verifier side (only needs pubkey + sig) ───────────────────────────────────
 pubkey = identity.public_key_b64()
 
-print("\n=== verifier ===")
+print('\n=== verifier ===')
 ok = verify_message(pubkey, message, signature)
-print("valid  :", ok)                               # True
-print("id     :", pubkey_to_id(pubkey))             # re-derived, no seed needed
+print('valid  :', ok)  # True
+print('id     :', pubkey_to_id(pubkey))  # re-derived, no seed needed
 
 # Tampered message should fail
-ok_tampered = verify_message(pubkey, message + "!", signature)
-print("tamper :", ok_tampered)                      # False
+ok_tampered = verify_message(pubkey, message + '!', signature)
+print('tamper :', ok_tampered)  # False

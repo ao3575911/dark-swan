@@ -1,40 +1,40 @@
 # Dark-Swan Philosophy
 
-> "Graceful anonymity through symbolic verification."
+> "Self-issued identity. Portable proofs. No permission layer."
 
 ---
 
 ## Why this project exists
 
-Identity on the internet is broken in two opposite directions.
+Identity on the internet is being pulled into two bad futures.
 
-On one side: centralised platforms that require a real name, email, phone number, and payment method before you can say anything at all. Your identity is owned by the platform. They can delete you, shadow-ban you, sell your metadata, or hand it to governments. You are a tenant in someone else's panopticon.
+On one side: state and platform digital-ID systems that convert access, speech, payments, and reputation into permissioned infrastructure. Your identity is issued by someone else, revoked by someone else, and correlated across contexts by default.
 
 On the other side: the fully anonymous throwaway account — no accountability, no continuity, no verifiable history. Nothing stops a bad actor from creating a thousand such accounts. Nothing stops a conversation from being astroturfed.
 
-Dark-Swan is built for the space in between.
+Dark-Swan is built from the opposite angle: identity as self-issued infrastructure, not administrative control.
 
-It gives you a **persistent pseudonymous identity** — stable enough to build a reputation, verifiable enough that others can confirm you are the same entity across contexts, anonymous enough that no one learns who you are from the identifier alone.
-
----
-
-## The core idea: keys, not names
-
-Your identity is derived from a keypair, not from a database entry. There is no registration, no authority to approve you, and no central list that can be seized or taken offline.
-
-```
-your secret seed → deterministic keypair → public key → symbolic ID
-```
-
-The symbolic ID (`KLNI`, `FWEM`, …) is a 4-letter word derived from your public key. Anyone can verify that a given public key produces a given symbolic ID — independently, without contacting any server. If you sign a message with your key, anyone who holds your public key can confirm it was you, with no third party involved.
+It gives you a **persistent pseudonymous identity** — stable enough to build reputation, verifiable enough that others can confirm continuity, and anonymous enough that no legal name, phone number, platform account, or government credential is required.
 
 ---
 
-## Symbolic grounding (GDk9)
+## The core idea: keys, not permission
 
-Dark-Swan IDs are not just random hex strings. Each 4-letter word carries structure from the GDk9 symbolic system: a digital root, a dominant symmetry class, a total energy. These are derived properties — you cannot choose them directly — but they make identities *feel* different from each other in a meaningful way.
+Your identity is derived from a keypair, not from a database entry. There is no issuer, approval queue, phone-number gate, compliance vendor, or central list required for verification.
 
-This is not magic. It is a design choice to make the identity space humanly navigable: a registry of thousands of identities that can be searched by character, by energy, by class. A fingerprint that a person can speak aloud and that a community can learn to recognise.
+```
+random/private key → public key → DID fingerprint + symbolic short name
+```
+
+The DID is the canonical identity. The symbolic short name (`KLNI`, `FWEM`, …) is a 4-letter word derived from your public key. Anyone can verify that a given public key produces a given symbolic ID — independently, without contacting any server. If you sign a message with your key, anyone who holds your public key can confirm it was you, with no third party involved.
+
+---
+
+## Symbolic layer: useful, not mandatory
+
+Dark-Swan uses a canonical DID fingerprint for serious identity work. The 4-letter symbolic name and its energy/class metrics are an optional human layer on top.
+
+Keep the symbolic metrics if you want identity to be memorable, searchable, and community-native. Remove or ignore them if you want a minimal cryptographic DID system. They are not security assumptions. They are UX and culture.
 
 ---
 
@@ -42,7 +42,7 @@ This is not magic. It is a design choice to make the identity space humanly navi
 
 Your symbolic ID is stable. Your handle (`ds-QVWK`) rotates every UTC day.
 
-If someone only knows your handle, they cannot tell whether you were online yesterday or last week — unless they already know your symbolic ID. This gives a layer of temporal unlinkability for observers who do not have prior context. It is not perfect anonymity. It is **graceful anonymity**: meaningful protection without making the system unusable.
+If someone only knows your handle, they cannot tell whether you were online yesterday or last week — unless they already know your symbolic short name. This gives a layer of temporal unlinkability for observers who do not have prior context. It is not perfect anonymity. It is **graceful anonymity**: meaningful protection without making the system unusable.
 
 ---
 
@@ -50,7 +50,7 @@ If someone only knows your handle, they cannot tell whether you were online yest
 
 Signing a message proves you hold a private key. But a raw signature is context-free — it requires the verifier to know what was signed, hold your public key, and do the verification themselves.
 
-A proof card packages all of that into a single portable document: your DID, your symbolic ID, your current handle, a free-text claim, an expiry, your public key, and an Ed25519 signature over the whole thing. Anyone can verify it with zero infrastructure — no registry lookup, no server, no seed. It is sovereignty made portable.
+A proof card packages all of that into a single portable document: your DID, your symbolic short name, your current handle, a free-text claim, an expiry, your public key, and an Ed25519 signature over the whole thing. Anyone can verify it with zero infrastructure — no registry lookup, no server, no seed. It is sovereignty made portable.
 
 This is the lightest possible unit of verifiable trust: a single JSON file that can be attached to an email, posted in a forum, or embedded in another document, and that stands on its own.
 
@@ -66,8 +66,8 @@ It is an identity layer, not a full anonymity system. Think of it as a cryptogra
 
 ## Constraints and trade-offs we accept
 
-- **Seed security is the user's responsibility.** If your seed is weak or exposed, your identity is compromised. We cannot change this without introducing a custodian, which defeats the purpose.
-- **4-letter IDs will collide at scale.** This is a known limitation, acceptable for early adoption. The v0.3 DID upgrade introduces a longer fingerprint while preserving the human-readable short form.
+- **Key security is the user's responsibility.** Random encrypted key files are preferred. Legacy seed mode is convenient, but weak seeds are brute-forceable.
+- **4-letter symbols will collide at scale.** This is acceptable because the canonical DID fingerprint is the real identity key. The symbol is a label, not authority.
 - **No federation yet.** The registry is local JSON. This is a pragmatic starting point, not an architectural commitment. Federation and transparency logs are on the roadmap.
 - **Handle linkability if your ID is known.** We do not pretend otherwise. The handle rotation is a convenience layer, not a strong unlinkability guarantee.
 

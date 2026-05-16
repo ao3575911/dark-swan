@@ -1,6 +1,7 @@
 """Tests for ds_registry.py — DSRegistry CRUD and search."""
-import sys
+
 import os
+import sys
 import tempfile
 import unittest
 
@@ -62,7 +63,7 @@ def _make_registry() -> tuple:
     """Return (registry, tmp_path) backed by a temp file."""
     tmp = tempfile.NamedTemporaryFile(suffix='.json', delete=False)
     tmp.close()
-    os.unlink(tmp.name)          # let DSRegistry create it fresh
+    os.unlink(tmp.name)  # let DSRegistry create it fresh
     return DSRegistry(tmp.name), tmp.name
 
 
@@ -80,6 +81,7 @@ class TestRegistryCommit(unittest.TestCase):
     def test_commit_returns_record(self):
         rec = self.reg.commit(self.ident.public_key_b64(), 'ds-TEST')
         self.assertEqual(rec['symbolic_id'], self.ident.symbolic_id)
+        self.assertEqual(rec['did'], self.ident.did)
 
     def test_commit_persists(self):
         self.reg.commit(self.ident.public_key_b64(), 'ds-TEST')
@@ -124,6 +126,11 @@ class TestRegistryResolve(unittest.TestCase):
         rec = self.reg.resolve(self.ident.symbolic_id)
         self.assertIsNotNone(rec)
         self.assertEqual(rec['symbolic_id'], self.ident.symbolic_id)
+
+    def test_resolve_by_did(self):
+        rec = self.reg.resolve(self.ident.did)
+        self.assertIsNotNone(rec)
+        self.assertEqual(rec['did'], self.ident.did)
 
     def test_resolve_missing_returns_none(self):
         self.assertIsNone(self.reg.resolve('ZZZZ'))
@@ -207,19 +214,16 @@ class TestRegistryVerification(unittest.TestCase):
 
     def test_verify_pubkey_matches(self):
         self.assertTrue(
-            self.reg.verify_pubkey_matches(
-                self.ident.symbolic_id,
-                self.ident.public_key_b64()
-            )
+            self.reg.verify_pubkey_matches(self.ident.symbolic_id, self.ident.public_key_b64())
         )
+
+    def test_verify_pubkey_matches_did(self):
+        self.assertTrue(self.reg.verify_pubkey_matches(self.ident.did, self.ident.public_key_b64()))
 
     def test_verify_pubkey_wrong_key(self):
         other = DSIdentity('other-seed')
         self.assertFalse(
-            self.reg.verify_pubkey_matches(
-                self.ident.symbolic_id,
-                other.public_key_b64()
-            )
+            self.reg.verify_pubkey_matches(self.ident.symbolic_id, other.public_key_b64())
         )
 
 
@@ -250,4 +254,4 @@ class TestRegistryUpdateRemove(unittest.TestCase):
         self.assertEqual(self.reg.count(), 0)
 
     def test_remove_missing_no_error(self):
-        self.reg.remove('ZZZZ')   # should not raise
+        self.reg.remove('ZZZZ')  # should not raise
