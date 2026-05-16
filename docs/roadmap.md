@@ -1,6 +1,6 @@
 # Dark-Swan Roadmap
 
-## v0.2.1 — Hardening pass  *(current)*
+## v0.2.1 — Hardening pass  *(released)*
 
 - Fix empty / malformed registry file crash
 - Tighten CLI validation (`--dr`, `--class`, `--energy-range`)
@@ -8,7 +8,7 @@
 - Introduce Proof Cards (`ds proof create / verify / card`)
 - Expand protocol design and philosophy docs
 
-## v0.3 — DID / fingerprint upgrade
+## v0.3 — DID / fingerprint upgrade  *(current)*
 
 - Add `did:ds:<hex16>` long-form identity key (first 8 bytes of SHA-256(pubkey) as hex)
 - Registry records carry both `symbolic_id` (4-letter short form) and `did` (long form)

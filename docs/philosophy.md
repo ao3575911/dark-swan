@@ -46,6 +46,16 @@ If someone only knows your handle, they cannot tell whether you were online yest
 
 ---
 
+## Portable proofs
+
+Signing a message proves you hold a private key. But a raw signature is context-free — it requires the verifier to know what was signed, hold your public key, and do the verification themselves.
+
+A proof card packages all of that into a single portable document: your DID, your symbolic ID, your current handle, a free-text claim, an expiry, your public key, and an Ed25519 signature over the whole thing. Anyone can verify it with zero infrastructure — no registry lookup, no server, no seed. It is sovereignty made portable.
+
+This is the lightest possible unit of verifiable trust: a single JSON file that can be attached to an email, posted in a forum, or embedded in another document, and that stands on its own.
+
+---
+
 ## What this is not
 
 Dark-Swan does not hide your IP address. It does not encrypt your messages. It does not prevent a sufficiently motivated adversary with physical access from finding you.

@@ -15,7 +15,7 @@ seed (string)
           └→ Ed25519PublicKey  (32 bytes raw)
 ```
 
-**Known limitation:** SHA-256 is used directly as Ed25519 private bytes. This is deterministic and convenient but not hardened — a compromised hash function or brute-force attack on the seed space could recover the key. A future hardening pass (v0.2.1+) should adopt a proper KDF such as Argon2id or scrypt with a per-identity salt.
+**Known limitation:** SHA-256 is used directly as Ed25519 private bytes. This is deterministic and convenient but not hardened — a compromised hash function or brute-force attack on the seed space could recover the key. v0.2.1 documents this risk (see L2 in §7); an optional Argon2id/scrypt KDF is planned for v0.3.
 
 ---
 
