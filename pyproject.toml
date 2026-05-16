@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dark-swan"
+version = "0.2.0"
+description = "Decentralized symbolic identity protocol with GDk9 grounding"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.10"
+dependencies = ["cryptography>=41"]
+
+[project.scripts]
+ds = "ds_cli:main"
+
+[tool.setuptools]
+py-modules = ["ds_cli", "ds_gdk9", "ds_protocol_core", "ds_registry"]

@@ -1,0 +1,1 @@
+# Protocol Design\nArchitecture layers, symbolic system, and registry logic.
