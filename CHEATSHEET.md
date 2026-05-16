@@ -37,11 +37,11 @@ ds verify <pubkey> "the message" <sig>
 ## Registry
 
 ```bash
-ds publish "my seed"           # register in registry.json
-ds publish "my seed" --overwrite  # update existing record
+ds publish "my seed"                  # register in registry.json
+ds publish "my seed" --overwrite      # update existing record
 
-ds lookup KLNI                 # by symbolic ID
-ds lookup ds-QVWK              # by today's handle
+ds lookup KLNI                        # by symbolic ID
+ds lookup ds-QVWK                     # by today's handle
 ```
 
 ---
@@ -53,6 +53,21 @@ ds search                          # all records
 ds search --dr 7                   # digital root = 7
 ds search --class asymmetric       # dominant class
 ds search --energy-range 10,50     # SymPhi energy band
+```
+
+---
+
+## Proof cards
+
+```bash
+ds proof create "my seed" --claim "I built dark-swan"
+# → proof.json  (valid 24 h, signed with Ed25519)
+
+ds proof verify proof.json
+# → ✓ valid
+
+ds proof card proof.json
+# → formatted display
 ```
 
 ---
@@ -92,3 +107,22 @@ seed
                                               │
                                     SHA3-256(id + epoch_day) → handle  ds-QVWK
 ```
+
+## Proof card wire format
+
+```json
+{
+  "type":       "dark-swan-proof",
+  "did":        "did:ds:KLNI",
+  "symbol":     "KLNI",
+  "handle":     "ds-QVWK",
+  "claim":      "I control this identity",
+  "context":    "github.com/ao3575911/dark-swan",
+  "issued_at":  "2026-05-16T00:00:00Z",
+  "expires_at": "2026-05-17T00:00:00Z",
+  "pubkey":     "<base64url 44-char>",
+  "signature":  "<base64url Ed25519 sig>"
+}
+```
+
+Signature covers all fields except `signature` itself (canonical JSON, sorted keys).
