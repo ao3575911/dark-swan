@@ -50,9 +50,13 @@ ds lookup ds-QVWK
 | `sign <seed> <msg>` | Sign a message; outputs signature + pubkey |
 | `verify <pubkey> <msg> <sig>` | Verify without a seed; re-derives symbolic ID |
 | `publish <seed>` | Register identity in the local registry |
+| `publish <seed> --overwrite` | Replace an existing registry record |
 | `lookup <id\|handle>` | Resolve a symbolic ID or `ds-XXXX` handle |
 | `search` | Filter registry by `--dr`, `--class`, or `--energy-range` |
 | `profile <word>` | GDk9 symbolic breakdown of any 4-letter word |
+| `proof create <seed>` | Create a signed portable proof card |
+| `proof verify <file>` | Verify a proof card |
+| `proof card <file>` | Display a formatted proof card |
 
 **Global flags** (before the subcommand):
 
@@ -67,17 +71,38 @@ ds lookup ds-QVWK
 ## How symbolic IDs work
 
 ```
-seed → Ed25519 keypair → SHA-256(public_key) → first 4 bytes → A-Z letters
+seed
+ └→ SHA-256(seed)
+     └→ Ed25519 private key
+         └→ public key  (32 bytes raw)
+             └→ SHA-256(pubkey)
+                 └→ first 4 bytes → A-Z  →  symbolic_id  e.g. KLNI
+                                              │
+                                    SHA3-256(id + epoch_day) → handle  ds-QVWK
 ```
 
 The symbolic ID (`KLNI`, `FWEM`, …) is derived from the **public key only**.  
 Anyone with your public key can independently verify your ID — no seed required.
 
-Each letter carries GDk9 symmetry-class energy (idempotent / biphasic / involutive / asymmetric).  
-The ID is indexed by digital root (1–9) and total SymPhi energy for registry search.
+**Ephemeral handles** (`ds-XXXX`) rotate each UTC day.
 
-**Ephemeral handles** (`ds-XXXX`) rotate each UTC day:  
-`SHA3-256(symbolic_id + epoch_day) → 4-letter word → ds-XXXX`
+---
+
+## Symmetry classes
+
+Each letter in a symbolic ID carries a GDk9 symmetry class that determines its energy contribution:
+
+| Class | Color | Letters | Energy rule |
+|-------|-------|---------|-------------|
+| idempotent | cyan | A H I M O T U V W X Y | `pos` |
+| biphasic | yellow | B C D E K | `sin(pos)` |
+| involutive | magenta | N S Z | `1/pos` |
+| asymmetric | red | F G J L P Q R | `pos + 1` |
+
+**Digital root** (DR 1–9): A1Z26 letter sum reduced to a single digit (9 if divisible by 9).  
+**SymPhi energy**: sum of each letter's energy value under its class rule.
+
+IDs are indexed by DR and total energy for registry search.
 
 ---
 
@@ -92,17 +117,27 @@ ds search                               # list all
 
 ---
 
-## GDk9 integration
+## Python API
 
-Install `gdk9` alongside dark-swan for:
+```python
+from ds_protocol_core import DSIdentity, verify_message, pubkey_to_id
 
-- DCG path analysis in `ds profile`
-- Homotopy equivalence checks between symbolic IDs
-- Full SymPhi energy model
+# Generate an identity
+identity = DSIdentity("your secret seed")
+print(identity.symbolic_id)          # e.g. "KLNI"
+print(identity.ephemeral_handle())   # e.g. "ds-QVWK" — rotates daily
+print(identity.public_key_b64())     # base64url-encoded Ed25519 public key
 
-```bash
-pip install -e ../gdk9   # or wherever your gdk9 lives
+# Sign a message
+sig = identity.sign("hello world")
+
+# Verify with only the public key (no seed needed)
+pubkey = identity.public_key_b64()
+ok = verify_message(pubkey, "hello world", sig)  # True
+sid = pubkey_to_id(pubkey)                        # re-derives symbolic ID
 ```
+
+See `examples/` for complete workflows including registry use.
 
 ---
 
@@ -125,6 +160,20 @@ A proof card is a signed JSON object containing your DID, symbolic ID, handle, c
 
 ---
 
+## GDk9 integration
+
+Install `gdk9` alongside dark-swan for:
+
+- DCG path analysis in `ds profile`
+- Homotopy equivalence checks between symbolic IDs
+- Full SymPhi energy model
+
+```bash
+pip install -e ../gdk9   # or wherever your gdk9 lives
+```
+
+---
+
 ## Project layout
 
 ```
@@ -137,7 +186,8 @@ docs/
   protocol_design.md  Full protocol specification
   philosophy.md       Project purpose and design rationale
   roadmap.md          Planned milestones
-tests/               Unit tests
+examples/            Runnable Python examples
+tests/               124 unit tests
 ```
 
 ---
