@@ -37,7 +37,14 @@ class DSRegistry:
         self.path = Path(db_path)
         self._db: Dict[str, dict] = {}
         if self.path.exists():
-            self._db = json.loads(self.path.read_text())
+            text = self.path.read_text().strip()
+            if text:
+                try:
+                    self._db = json.loads(text)
+                except json.JSONDecodeError as exc:
+                    raise ValueError(
+                        f'Registry file {str(self.path)!r} contains invalid JSON: {exc}'
+                    ) from exc
 
     # ── Write ─────────────────────────────────────────────────────────────────
 

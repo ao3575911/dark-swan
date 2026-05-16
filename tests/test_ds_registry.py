@@ -9,6 +9,55 @@ from ds_protocol_core import DSIdentity
 from ds_registry import DSRegistry
 
 
+class TestRegistryRobustness(unittest.TestCase):
+    """Registry must survive edge-case file states."""
+
+    def _tmp(self) -> str:
+        fd, path = tempfile.mkstemp(suffix='.json')
+        os.close(fd)
+        return path
+
+    def test_empty_file_loads_without_crash(self):
+        path = self._tmp()
+        # file exists but is empty
+        open(path, 'w').close()
+        try:
+            reg = DSRegistry(path)
+            self.assertEqual(reg.count(), 0)
+        finally:
+            os.unlink(path)
+
+    def test_whitespace_only_file_loads_without_crash(self):
+        path = self._tmp()
+        with open(path, 'w') as fh:
+            fh.write('   \n\t\n')
+        try:
+            reg = DSRegistry(path)
+            self.assertEqual(reg.count(), 0)
+        finally:
+            os.unlink(path)
+
+    def test_malformed_json_raises_value_error(self):
+        path = self._tmp()
+        with open(path, 'w') as fh:
+            fh.write('{"bad":')
+        try:
+            with self.assertRaises(ValueError):
+                DSRegistry(path)
+        finally:
+            os.unlink(path)
+
+    def test_truncated_json_raises_value_error(self):
+        path = self._tmp()
+        with open(path, 'w') as fh:
+            fh.write('{"key": "val"')
+        try:
+            with self.assertRaises(ValueError):
+                DSRegistry(path)
+        finally:
+            os.unlink(path)
+
+
 def _make_registry() -> tuple:
     """Return (registry, tmp_path) backed by a temp file."""
     tmp = tempfile.NamedTemporaryFile(suffix='.json', delete=False)

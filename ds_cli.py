@@ -24,6 +24,7 @@ import time
 from typing import List, Optional, Sequence
 
 from ds_gdk9 import symbolic_id_profile, derive_handle
+from ds_proof import create_proof, verify_proof, load_proof, save_proof
 from ds_protocol_core import DSIdentity, verify_message, pubkey_to_id
 from ds_registry import DSRegistry
 
@@ -339,17 +340,32 @@ def cmd_lookup(args: argparse.Namespace, en: bool) -> None:
     print(_registry_card(rec, en))
 
 
+_VALID_CLASSES = ('idempotent', 'biphasic', 'involutive', 'asymmetric')
+
+
 def cmd_search(args: argparse.Namespace, en: bool) -> None:
     reg = DSRegistry(args.registry)
 
     if args.dr is not None:
+        if not 1 <= args.dr <= 9:
+            _die('--dr must be an integer between 1 and 9', en)
         results = reg.search_by_dr(args.dr)
         label   = f'dr={_fmt_dr(args.dr, en)}'
     elif args.sym_class:
+        if args.sym_class not in _VALID_CLASSES:
+            _die(f'--class must be one of: {", ".join(_VALID_CLASSES)}', en)
         results = reg.search_by_class(args.sym_class)
         label   = f'class={_c(args.sym_class, _CLS_COL.get(args.sym_class, "white"), en)}'
     elif args.energy_range:
-        lo, hi  = map(float, args.energy_range.split(','))
+        try:
+            parts = args.energy_range.split(',')
+            if len(parts) != 2:
+                raise ValueError
+            lo, hi = float(parts[0]), float(parts[1])
+        except ValueError:
+            _die('--energy-range must be "low,high"  e.g. 10,50', en)
+        if lo > hi:
+            _die(f'--energy-range low ({lo}) must be <= high ({hi})', en)
         results = reg.search_by_energy_range(lo, hi)
         label   = f'energy={_c(f"{lo}..{hi}", "cyan", en)}'
     else:
@@ -410,6 +426,110 @@ def cmd_profile(args: argparse.Namespace, en: bool) -> None:
         pass
 
 
+# ── Proof commands ────────────────────────────────────────────────────────────
+
+def cmd_proof_create(args: argparse.Namespace, en: bool) -> None:
+    identity = DSIdentity(args.seed)
+    proof = create_proof(
+        identity,
+        args.claim,
+        context=args.context,
+        ttl_hours=args.ttl,
+    )
+
+    print(_section('dark-swan · proof create', en=en))
+    box = Box(['', ''], col_align=['r', 'l'], enabled=en, headless=True)
+    box.row([_c('did',    'dim', en), _c(proof['did'],    'bold',  en)])
+    box.row([_c('symbol', 'dim', en), _c(proof['symbol'], 'bold',  en)])
+    box.row([_c('handle', 'dim', en), _c(proof['handle'], 'cyan',  en)])
+    box.divider()
+    box.row([_c('claim',      'dim', en), _c(proof['claim'],      'white', en)])
+    box.row([_c('context',    'dim', en), _c(proof['context'],    'dim',   en)])
+    box.row([_c('issued_at',  'dim', en), _c(proof['issued_at'],  'dim',   en)])
+    box.row([_c('expires_at', 'dim', en), _c(proof['expires_at'], 'dim',   en)])
+    box.divider()
+    box.row([_c('pubkey', 'dim', en),
+             _c(proof['pubkey'][:32], 'dim', en) + _c('…', 'dim', en)])
+    box.row([_c('sig',    'dim', en),
+             _c(proof['signature'][:48], 'dim', en) + _c('…', 'dim', en)])
+    print(box.render())
+
+    out = args.output or 'proof.json'
+    save_proof(proof, out)
+    print('  ' + _c('✓', 'bright_green', en) + '  saved to '
+          + _c(out, 'bright_white', en))
+
+    if args.json:
+        print(json.dumps(proof, indent=2, ensure_ascii=False))
+
+
+def cmd_proof_verify(args: argparse.Namespace, en: bool) -> None:
+    try:
+        proof = load_proof(args.proof_file)
+    except (OSError, json.JSONDecodeError) as exc:
+        _die(f'cannot read proof: {exc}', en)
+
+    valid, reason = verify_proof(proof)
+
+    print(_section('dark-swan · proof verify', en=en))
+    box = Box(['', ''], col_align=['r', 'l'], enabled=en, headless=True)
+    mark = (_c('✓  ' + reason, 'bright_green', en) if valid
+            else _c('✗  ' + reason, 'bright_red', en))
+    box.row([_c('result', 'dim', en), mark])
+    if valid:
+        box.divider()
+        box.row([_c('did',    'dim', en), _c(proof.get('did',    '?'), 'bold', en)])
+        box.row([_c('symbol', 'dim', en), _c(proof.get('symbol', '?'), 'bold', en)])
+        box.row([_c('claim',  'dim', en), _c(proof.get('claim',  '?'), 'white', en)])
+        box.row([_c('issued', 'dim', en), _c(proof.get('issued_at',  '?'), 'dim', en)])
+        box.row([_c('expires','dim', en), _c(proof.get('expires_at', '?'), 'dim', en)])
+    print(box.render())
+    if not valid:
+        sys.exit(1)
+
+
+def cmd_proof_card(args: argparse.Namespace, en: bool) -> None:
+    try:
+        proof = load_proof(args.proof_file)
+    except (OSError, json.JSONDecodeError) as exc:
+        _die(f'cannot read proof: {exc}', en)
+
+    valid, reason = verify_proof(proof)
+    stamp = (_c('✓ valid', 'bright_green', en) if valid
+             else _c('✗ ' + reason, 'bright_red', en))
+
+    print(_section('dark-swan · proof card', en=en))
+    box = Box(['', ''], col_align=['r', 'l'], enabled=en, headless=True)
+    box.row([_c('did',     'dim', en), _c(proof.get('did',     '?'), 'bold', en)])
+    box.row([_c('symbol',  'dim', en), _c(proof.get('symbol',  '?'), 'bold', en)])
+    box.row([_c('handle',  'dim', en), _c(proof.get('handle',  '?'), 'cyan', en)])
+    box.divider()
+    box.row([_c('claim',   'dim', en), _c(proof.get('claim',   '?'), 'white', en)])
+    box.row([_c('context', 'dim', en), _c(proof.get('context', '?'), 'dim',   en)])
+    box.row([_c('issued',  'dim', en), _c(proof.get('issued_at',  '?'), 'dim', en)])
+    box.row([_c('expires', 'dim', en), _c(proof.get('expires_at', '?'), 'dim', en)])
+    box.divider()
+    box.row([_c('status',  'dim', en), stamp])
+    print(box.render())
+
+    if args.qr:
+        print(_c('\n  QR code support requires the `qrcode` package:', 'dim', en))
+        print(_c('  pip install qrcode[pil]', 'dim', en))
+        print(_c('  (planned for v0.4)', 'dim', en))
+
+
+def cmd_proof(args: argparse.Namespace, en: bool) -> None:
+    sub = args.proof_cmd
+    if sub == 'create':
+        cmd_proof_create(args, en)
+    elif sub == 'verify':
+        cmd_proof_verify(args, en)
+    elif sub == 'card':
+        cmd_proof_card(args, en)
+    else:
+        _die(f'unknown proof subcommand: {sub!r}', en)
+
+
 # ── Argument parser ───────────────────────────────────────────────────────────
 
 def build_parser() -> argparse.ArgumentParser:
@@ -453,6 +573,28 @@ def build_parser() -> argparse.ArgumentParser:
     pr = sub.add_parser('profile', help='Show GDk9 profile of a word')
     pr.add_argument('word', help='Word to profile  (e.g. FWEM)')
 
+    pf = sub.add_parser('proof', help='Create and verify proof cards')
+    pf_sub = pf.add_subparsers(dest='proof_cmd', required=True)
+
+    pf_create = pf_sub.add_parser('create', help='Create a signed proof card')
+    pf_create.add_argument('seed',    help='Secret seed passphrase')
+    pf_create.add_argument('--claim', default='I control this identity',
+                           help='Claim string (default: "I control this identity")')
+    pf_create.add_argument('--context', default='github.com/ao3575911/dark-swan',
+                           help='Context URI')
+    pf_create.add_argument('--ttl', type=float, default=24.0,
+                           help='Expiry in hours (default: 24)')
+    pf_create.add_argument('--output', '-o', default=None,
+                           help='Output file (default: proof.json)')
+
+    pf_verify = pf_sub.add_parser('verify', help='Verify a proof card')
+    pf_verify.add_argument('proof_file', help='Path to proof JSON file')
+
+    pf_card = pf_sub.add_parser('card', help='Display a formatted proof card')
+    pf_card.add_argument('proof_file', help='Path to proof JSON file')
+    pf_card.add_argument('--qr', action='store_true',
+                         help='Show QR code (requires qrcode package)')
+
     return p
 
 
@@ -469,6 +611,7 @@ def main() -> None:
         'lookup':   cmd_lookup,
         'search':   cmd_search,
         'profile':  cmd_profile,
+        'proof':    cmd_proof,
     }
     dispatch[args.command](args, en)
 

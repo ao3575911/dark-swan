@@ -15,4 +15,7 @@ dependencies = ["cryptography>=41"]
 ds = "ds_cli:main"
 
 [tool.setuptools]
-py-modules = ["ds_cli", "ds_gdk9", "ds_protocol_core", "ds_registry"]
+py-modules = ["ds_cli", "ds_gdk9", "ds_proof", "ds_protocol_core", "ds_registry"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

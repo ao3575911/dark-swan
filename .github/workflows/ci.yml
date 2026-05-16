@@ -20,8 +20,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
-        run: pip install cryptography
-      - name: Syntax check
-        run: python -m py_compile ds_protocol_core.py ds_registry.py examples/generate_identity.py
-      - name: Smoke test
-        run: PYTHONPATH=. python examples/generate_identity.py
+        run: pip install cryptography pytest
+      - name: Run tests
+        run: PYTHONPATH=. python -m pytest tests/ -v

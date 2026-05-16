@@ -106,15 +106,52 @@ pip install -e ../gdk9   # or wherever your gdk9 lives
 
 ---
 
+## Proof cards
+
+Create a portable, signed identity proof:
+
+```bash
+ds proof create "your secret seed" --claim "I built dark-swan"
+# → proof.json
+
+ds proof verify proof.json
+# → ✓ valid
+
+ds proof card proof.json
+# → formatted proof display
+```
+
+A proof card is a signed JSON object containing your DID, symbolic ID, handle, claim, expiry, public key, and Ed25519 signature. Anyone can verify it with only the public key — no seed, no registry lookup required.
+
+---
+
 ## Project layout
 
 ```
 ds_gdk9.py           GDk9 symbolic bridge (standalone, no gdk9 dep)
 ds_protocol_core.py  DSIdentity — keypair, signing, symbolic ID derivation
 ds_registry.py       Persistent JSON registry with GDk9-aware search
-ds_cli.py            CLI — all 7 commands
-tests/               76 unit tests
+ds_proof.py          Proof cards — create, sign, and verify portable proofs
+ds_cli.py            CLI — generate, sign, verify, publish, lookup, search, profile, proof
+docs/
+  protocol_design.md  Full protocol specification
+  philosophy.md       Project purpose and design rationale
+  roadmap.md          Planned milestones
+tests/               Unit tests
 ```
+
+---
+
+## Roadmap
+
+See [docs/roadmap.md](docs/roadmap.md) for the full plan. Short version:
+
+| Version | Theme |
+|---------|-------|
+| v0.2.1 | Hardening — registry fixes, CLI validation, proof cards, full CI |
+| v0.3 | DID / fingerprint upgrade, optional KDF, SQLite registry |
+| v0.4 | Proof cards v2 — QR codes, claim chains |
+| v0.5 | Decentralized registry / transparency log |
 
 ---
 
